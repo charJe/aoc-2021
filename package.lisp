@@ -1,5 +1,5 @@
 (in-package :cl-user)
-(require :coalton)
+(mapc 'require (list :coalton :str))
 
 (defpackage advent-of-code
   (:use #:coalton #:coalton-library))
