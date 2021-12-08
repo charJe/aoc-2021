@@ -15,15 +15,19 @@
     (fromsome (concat-string x " is not an integer")
               (parse-int x)))
 
-    (declare replace-by ((:a -> :a) -> integer -> (list :a) -> (list :a)))
+  (declare replace-by ((:a -> :a) -> integer -> (list :a) -> (list :a)))
   (define (replace-by f i l)
-    (let ((start (take i l))
-          (rest (drop i l))
-          (target (fromsome "no head" (head (take 1 rest))))
-          (end (drop 1 rest)))
-      (append start
-              (cons (f target)
-                    end))))
+    (let ((%replace-by
+            (fn (i start end)
+              (let ((h (fromsome "no head" (head end))))
+                (if (== 0 i)
+                    (append (reverse start)
+                            (cons (f h) (drop 1 end)))
+                    (%replace-by
+                     (- i 1)
+                     (cons h start)
+                     (drop 1 end)))))))
+      (%replace-by i nil l)))
 
   (define-instance (Functor List)
     (define (map f l)
