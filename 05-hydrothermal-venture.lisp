@@ -13,7 +13,7 @@
       ((line (point r1 c1)
              (point r2 c2))
        (and (/= r1 r2)
-           (/= c1 c2)))))
+            (/= c1 c2)))))
 
   (define input
     (pipe
@@ -54,15 +54,6 @@
 
   (define (line-points l)
     (reverse (%line-points nil l)))
-
-  (define (replace-by f i l)
-    (let ((start (take i l))
-          (rest (drop i l))
-          (target (fromsome "no head" (head (take 1 rest))))
-          (end (drop 1 rest)))
-      (append start
-              (cons (f target)
-                    end))))
 
   (define (row-add-spot c row)
     (replace-by (+ 1) c row))
