@@ -1,1 +1,1 @@
-sbcl sbcl-coalton sbcl-cl-str
+sbcl cl-coalton sbcl-cl-str sbcl-funds
