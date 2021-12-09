@@ -38,6 +38,11 @@
     (lisp (list :a) (xs ys)
       (cl:append xs ys)))
 
+  (define (else default o)
+    (match o
+      ((some o) o)
+      ((none) default)))
+
   ;;; funds bindings
   ;; hash-table
   (define-type (hash :k :v))
