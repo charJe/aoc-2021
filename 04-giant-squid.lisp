@@ -1,4 +1,4 @@
-(cl:in-package #:advent-of-code)
+(cl:in-package #:charje.advent-of-code)
 
 (coalton-toplevel
   (define-type (bingo-spot :a)

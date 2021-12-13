@@ -1,4 +1,4 @@
-(cl:in-package #:advent-of-code)
+(cl:in-package #:charje.advent-of-code)
 
 (coalton-toplevel
   ;; 0 becomes -1 and 1 becomes 1
