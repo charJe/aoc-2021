@@ -112,27 +112,73 @@
 
   ;;; funds bindings
   ;; hash-table
-  (define-type (hash :k :v))
+  (define-type (hash :k :v)
+    (hash lisp-object))
+
   (define empty-hash
-    (lisp lisp-object ()
-      (funds:make-hash)))
+    (hash (lisp lisp-object ()
+            (funds:make-hash :test #'cl:equal))))
 
-  (declare hash-set (:k -> :v -> lisp-object -> lisp-object))
-  (define (hash-set key value hash)
-    (lisp lisp-object (key value hash)
-      (funds:hash-set hash key value)))
+  (declare hash-set (:k -> :v -> (hash :k :v) -> (hash :k :v)))
+  (define (hash-set k v h)
+    (match h
+      ((hash h)
+       (hash (lisp lisp-object (k v h)
+               (funds:hash-set h k v))))))
 
-  (declare hash-ref (:k -> lisp-object -> (optional :v)))
-  (define (hash-ref key hash)
-    (match (lisp (tuple :v boolean) (key hash)
-             (cl:multiple-value-bind (value present)
-                 (funds:hash-ref hash key)
-               (cl:eval `(coalton (tuple ,value ,present)))))
-      ((tuple v (true)) (some v))
-      ((tuple _ (false)) none)))
+  (declare hash-remove (:k -> (hash :k :v) -> (hash :k :v)))
+  (define (hash-remove k h)
+    (match h
+      ((hash h)
+       (hash (lisp lisp-object (k h)
+               (funds:hash-remove k h))))))
 
-  (declare hash-keys (lisp-object -> (list :v)))
-  (define (hash-keys hash)
-    (lisp (list :v) (hash)
-      (funds:hash-keys hash)))
+  (declare hash-ref (:k -> (hash :k :v) -> (optional :v)))
+  (define (hash-ref k h)
+    (match h
+      ((hash h)
+       (match (lisp (tuple :v boolean) (k h)
+                (cl:multiple-value-bind (value present)
+                    (funds:hash-ref h k)
+                  (tuple value present)))
+         ((tuple v (true)) (some v))
+         ((tuple _ (false)) none)))))
+
+  (declare hash-keys ((hash :k :v) -> (list :k)))
+  (define (hash-keys h)
+    (match h
+      ((hash h)
+       (lisp (list :k) (h)
+         (funds:hash-keys h)))))
+
+  (declare map-hash ((:k -> :v -> :a) -> (hash :k :v) -> (list :a)))
+  (define (map-hash f h)
+    (match h
+      ((hash h)
+       (lisp (list :a) (f h)
+         (cl:let ((kv (funds:hash-as-alist h)))
+           (zipwith f
+                    (cl:mapcar 'cl:car kv)
+                    (cl:mapcar 'cl:cdr kv)))))))
+
+  (define (hash-size h)
+    (match h
+      ((hash h)
+       (lisp integer (h)
+         (funds:hash-size h)))))
+
+  (define (hash-replace-by default-value f k h)
+    (pipe
+     h
+     (hash-ref k) (else default-value)
+     f
+     (flip (hash-set k) h)))
   )
+
+(cl:defmacro make-hash (cl:&rest key-values)
+  `(pipe
+    empty-hash
+    ,@(cl:mapcar
+       (cl:lambda (key-value)
+         (cl:cons 'hash-set key-value))
+       key-values)))
