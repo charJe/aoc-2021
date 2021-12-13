@@ -65,6 +65,38 @@
     (lisp (list :a) (xs ys)
       (cl:append xs ys)))
 
+    (declare scan
+           ((:a -> :b -> :b)
+            -> :b
+            -> (list :a)
+            -> (list :b)))
+  (define (scan f y l)
+    (let ((%scan
+            (fn (as l)
+              (match l
+                ((nil) (reverse as))
+                ((cons h t)
+                 (match as
+                   ((cons a _)
+                    (%scan (cons (f h a) as) t))))))))
+      (%scan (cons y nil) l)))
+
+  (declare scany
+           ((:a -> :a -> :a)
+            -> (list :a)
+            -> (list :a)))
+  (define (scany f l)
+    (match l
+      ((cons h t)
+       (scan f h t))
+      ((nil) nil)))
+
+  (define (reduce f l)
+    (match l
+      ((nil) none)
+      ((cons single (nil)) (some single))
+      ((cons x xs) (some (fold f x xs)))))
+
   (define (else default o)
     (match o
       ((some o) o)
