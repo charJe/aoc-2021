@@ -1,5 +1,35 @@
 (cl:in-package #:charje.advent-of-code)
 
+(cl:defmacro my-pipe (cl:&body forms)
+  (cl:if (cl:= (cl:length forms) 1)
+         (cl:first forms)
+         `(pipe ,@forms)))
+
+(cl:defmacro define-> (var-or-fun cl:&body body)
+  `(define ,var-or-fun
+     (my-pipe ,@body)))
+
+(cl:defmacro match-> (expr cl:&body patterns)
+  `(match ,expr
+     ,@(cl:mapcar
+      (cl:lambda (pattern)
+        (cl:cons (cl:car pattern)
+                 `((my-pipe ,@(cl:cdr pattern)))))
+      patterns)))
+
+(cl:defmacro let-> (bindings cl:&body body)
+  `(let ,(cl:mapcar 'cl:cons
+                    (cl:mapcar 'cl:car bindings)
+                    (cl:mapcar (cl:lambda (binding)
+                                 `((my-pipe ,@(cdr binding))))
+                               bindings))
+     (my-pipe
+      ,@body)))
+
+(cl:defmacro fn-> (args cl:&body body)
+  `(fn ,args
+     (my-pipe
+       ,@body)))
 
 (coalton-toplevel
   (define (read-lines filename)
