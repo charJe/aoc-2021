@@ -102,6 +102,14 @@
       ((some o) o)
       ((none) default)))
 
+  (define (any-value p xs)
+    (match xs
+      ((nil) none)
+      ((cons x xs)
+       (if (p x)
+           (some x)
+           (any-value p xs)))))
+
   ;;; funds bindings
   ;; hash-table
   (define-type (hash :k :v))
