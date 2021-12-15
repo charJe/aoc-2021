@@ -97,6 +97,9 @@
       ((cons single (nil)) (some single))
       ((cons x xs) (some (fold f x xs)))))
 
+  (define (map-index f xs)
+    (zipwith f xs (range 0 (length xs))))
+
   (define (else default o)
     (match o
       ((some o) o)
