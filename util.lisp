@@ -187,12 +187,19 @@
        (hash (lisp lisp-object (k v h)
                (funds:hash-set h k v))))))
 
+  (declare hash-add (:k -> (hash :k :v) -> (hash :k :v)))
+  (define (hash-add k h)
+    (match h
+      ((hash h)
+       (hash (lisp lisp-object (k h)
+               (funds:hash-set h k))))))
+
   (declare hash-remove (:k -> (hash :k :v) -> (hash :k :v)))
   (define (hash-remove k h)
     (match h
       ((hash h)
        (hash (lisp lisp-object (k h)
-               (funds:hash-remove k h))))))
+               (funds:hash-remove h k))))))
 
   (declare hash-ref (:k -> (hash :k :v) -> (optional :v)))
   (define (hash-ref k h)
@@ -204,6 +211,13 @@
                   (tuple value present)))
          ((tuple v (true)) (some v))
          ((tuple _ (false)) none)))))
+
+  (declare hash-contains (:k -> (hash :k :v) -> boolean))
+  (define (hash-contains k h)
+    (match h
+      ((hash h)
+       (lisp boolean (k h)
+         (cl:nth-value 1 (funds:hash-ref h k))))))
 
   (declare hash-keys ((hash :k :v) -> (list :k)))
   (define (hash-keys h)
