@@ -14,7 +14,7 @@
       ((display a _) a)))
 
   (define input
-    (let-> ((process (compose (filter (/= "")) (split #\space))))
+    (let* ((process (compose (filter (/= "")) (split #\space))))
       "input/08-practice"
       read-lines
       (map (split #\|))
@@ -68,9 +68,9 @@
      c mapping))
 
   (define (eliminate-unique code mapping)
-    (let-> ((possibles code string-length
+    (let* ((possibles code string-length
                        (flip hash-ref unique-mapping)))
-      (match-> possibles
+      (match* possibles
         ((none) mapping)
         ((some possibles)
          letters
@@ -84,11 +84,11 @@
      (fold (eliminate-single (make-list c)) mapping)
      (keep-single (make-list c) self)))
 
-  (declare decode ((hash char (list char)) -> string -> integer))
+  (declare decode ((hash char (list char)) * string * integer))
   (define (decode mapping code)
     (pipe
      code into
-     (map (fn-> (char)
+     (map (fn* (char)
             mapping (hash-ref char) (else nil)
             head (else #\0)))
      sort into
@@ -98,11 +98,11 @@
     (pipe
      letters
      (fold
-      (fn-> (letter mappings)
+      (fn* (letter mappings)
         mappings
-        (map (fn-> (m)
+        (map (fn* (m)
                (hash-ref letter m) (else nil)
-               (map (fn-> (c)
+               (map (fn* (c)
                       (eliminate-others-keep-self letter c m)))))
         concat
         (append mappings))
@@ -116,7 +116,7 @@
      (== 45)))
 
   (define (decode-display display)
-    (let-> ((pattern display display-pattern)
+    (let* ((pattern display display-pattern)
             (mapping pattern
                      (fold eliminate-unique default-mapping)
                      possible-final-mappings

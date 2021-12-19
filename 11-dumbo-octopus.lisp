@@ -5,9 +5,9 @@
     (pipe
      "input/11"
      read-lines
-     (map (fn-> (line)
+     (map (fn* (line)
             (the (list char) (into line))
-            (map (fn-> (c)
+            (map (fn* (c)
                    c make-list into
                    fromsome-parse-int))))))
 
@@ -32,7 +32,7 @@
           board))
 
   (define (try-flash row col board)
-    (let-> ((spot (index board row) (else nil)
+    (let* ((spot (index board row) (else nil)
                   (flip index col) (else 0)))
       (if (or (< spot 10) (<= 100 spot))
           board
@@ -51,7 +51,7 @@
             (range (- row 1) (+ row 1)))))))
 
   (define (model-step board--count)
-    (let-> ((board board--count tuple-board
+    (let* ((board board--count tuple-board
                    (map (map (+ 1))))
             (flashed (fold
                       (fn (r board)
@@ -75,9 +75,9 @@
       (tuple board 0))))
 
   (define (first-all-flash board)
-    (let-> ((%all-flash
+    (let* ((%all-flash
              (fn (n board--count)
-               (match-> (model-step board--count)
+               (match* (model-step board--count)
                  ((tuple board _)
                   (if (pipe board concat (all (== 0)))
                       n

@@ -5,11 +5,11 @@
          (cl:first forms)
          `(pipe ,@forms)))
 
-(cl:defmacro define-> (var-or-fun cl:&body body)
+(cl:defmacro define* (var-or-fun cl:&body body)
   `(define ,var-or-fun
      (my-pipe ,@body)))
 
-(cl:defmacro match-> (expr cl:&body patterns)
+(cl:defmacro match* (expr cl:&body patterns)
   `(match ,expr
      ,@(cl:mapcar
       (cl:lambda (pattern)
@@ -17,19 +17,66 @@
                  `((my-pipe ,@(cl:cdr pattern)))))
       patterns)))
 
-(cl:defmacro let-> (bindings cl:&body body)
-  `(let ,(cl:mapcar 'cl:cons
-                    (cl:mapcar 'cl:car bindings)
-                    (cl:mapcar (cl:lambda (binding)
-                                 `((my-pipe ,@(cdr binding))))
-                               bindings))
-     (my-pipe
-      ,@body)))
+(cl:defmacro let* (bindings cl:&body body)
+  (cl:let* ((sym-args (cl:loop :for arg :in (cl:mapcar 'cl:first bindings)
+                        :if (cl:listp arg)
+                          :collect (cl:gensym)
+                         :else
+                           :collect arg))
+            (match-pairs (cl:loop :for arg :in (cl:mapcar 'cl:first bindings)
+                            :for sym :in sym-args
+                            :if (cl:listp arg)
+                              :collect (cl:cons arg sym)))
+            (matches (cl:reduce
+                      (cl:lambda (body match-pair)
+                        (cl:destructuring-bind (arg . sym)
+                            match-pair
+                          `(match ,sym
+                             (,arg ,body))))
+                      match-pairs
+                      :initial-value
+                      `(my-pipe
+                         ,@body))))
+      `(let ,(cl:mapcar 'cl:cons
+              sym-args
+              (cl:mapcar (cl:lambda (binding)
+                           `((my-pipe ,@(cl:rest binding))))
+                         bindings))
+     ,matches)))
 
-(cl:defmacro fn-> (args cl:&body body)
-  `(fn ,args
-     (my-pipe
-       ,@body)))
+(cl:defmacro fn* (args cl:&body body)
+  (cl:let* ((sym-args (cl:loop :for arg :in args
+                        :if (cl:listp arg)
+                          :collect (cl:gensym)
+                         :else
+                           :collect arg))
+            (match-pairs (cl:loop :for arg :in args
+                            :for sym :in sym-args
+                            :if (cl:listp arg)
+                              :collect (cl:cons arg sym)))
+            (matches (cl:reduce
+                      (cl:lambda (body match-pair)
+                        (cl:destructuring-bind (arg . sym)
+                            match-pair
+                          `(match ,sym
+                             (,arg ,body))))
+                      match-pairs
+                      :initial-value
+                      `(my-pipe
+                         ,@body))))
+    `(fn ,sym-args ,matches)))
+
+(cl:defmacro loop* (bindings cl:&body body)
+  (cl:let ((name 'recur))
+    (cl:when (cl:symbolp bindings)
+      (cl:setq name bindings
+               bindings (cl:first body)
+               body (cl:rest body)))
+  `(let ((,name (fn* ,(cl:mapcar 'cl:first bindings)
+                  ,@body)))
+     (,name ,@(cl:mapcar (cl:lambda (binding)
+                        (cons 'my-pipe (cl:rest binding)))
+                      bindings)))))
 
 (coalton-toplevel
   (define (read-lines filename)

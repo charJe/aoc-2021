@@ -48,9 +48,9 @@
     (pipe
      board
      (map-index
-      (fn-> (row r)
+      (fn* (row r)
         row (map-index
-             (fn-> (_ c)
+             (fn* (_ c)
                (let ((spot (access-board board r c)))
                  (if (all (< spot)
                         (neighbors board r c))
@@ -74,9 +74,9 @@
      sum))
 
   (define (basin-size board p)
-    (let-> ((basin-points
+    (let* ((basin-points
              (fn (points board p)
-               (match-> p
+               (match* p
                  ((point r c)
                   (if (<= 9 (access-board board r c))
                       (tuple board points)
@@ -93,7 +93,7 @@
                                r board)
                               p))))
                         (tuple board (cons p points))))))))))
-      (match-> (basin-points nil board p)
+      (match* (basin-points nil board p)
         ((tuple _ points)
          points
          remove-duplicates

@@ -52,7 +52,7 @@
                 ((cons x xs)
                  (if (opening-char x)
                      (%find-corrupt (cons x stack) xs)
-                     (let-> ((top stack head (else #\0)))
+                     (let* ((top stack head (else #\0)))
                        (if (== top (matching-char x))
                            (%find-corrupt (drop 1 stack) xs)
                            (some x)))))))))
@@ -69,13 +69,13 @@
   (define (line-ending chars)
     (let ((%find-ending
             (fn (stack chars)
-              (match-> chars
+              (match* chars
                 ((nil)
                  stack (map matching-char))
                 ((cons x xs)
                  (if (opening-char x)
                      (%find-ending (cons x stack) xs)
-                     (let-> ((top stack head (else #\0)))
+                     (let* ((top stack head (else #\0)))
                        (if (== top (matching-char x))
                            (%find-ending (drop 1 stack) xs)
                            (error "corrupt line")))))))))
@@ -84,13 +84,13 @@
   (define (line-complete-score line)
     (pipe
      line line-ending
-     (fold (fn-> (c acc)
+     (fold (fn* (c acc)
              c char-complete-score
              (+ (* 5 acc)))
            0)))
   
   (define (complete-score lines)
-    (let-> ((scores lines
+    (let* ((scores lines
                     (filter (fn (line)
                               (match (find-corrupt line)
                                 ((some _) false)
