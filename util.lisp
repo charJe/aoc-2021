@@ -85,6 +85,17 @@
                   (uiop:read-file-string filename)
                   :omit-nulls cl:t)))
 
+  (define (string-starts-with/3 ignore-case start s)
+    (lisp boolean (ignore-case start s)
+      (str:starts-with-p start s :ignore-case ignore-case)))
+
+  (define string-starts-with/2
+    (string-starts-with/3 false))
+
+  (define (join sep strings)
+    (lisp string (sep strings)
+      (str:join sep strings)))
+
   (define (fromsome-parse-int x)
     (fromsome (concat-string x " is not an integer")
               (parse-int x)))
