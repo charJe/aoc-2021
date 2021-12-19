@@ -178,7 +178,12 @@
 
   (define empty-hash
     (hash (lisp lisp-object ()
-            (funds:make-hash :test #'cl:equal))))
+            (funds:make-hash
+             :hash (cl:lambda (a)
+                     (cl:sxhash (cl:prin1-to-string a)))
+             :test (cl:lambda (a b)
+                     (cl:eval `(coalton (== ,(cl:prin1-to-string a)
+                                            ,(cl:prin1-to-string b)))))))))
 
   (declare hash-set (:k -> :v -> (hash :k :v) -> (hash :k :v)))
   (define (hash-set k v h)
