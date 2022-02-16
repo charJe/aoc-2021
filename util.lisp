@@ -94,7 +94,8 @@
           (cl:force-output)
           0))
       x))
-  
+
+  (declare read-lines (string -> (list string)))
   (define (read-lines filename)
     (lisp (list string) (filename)
       (str:split #\newline
@@ -108,10 +109,12 @@
   (define string-starts-with/2
     (string-starts-with/3 false))
 
+  (declare split-string (string -> string -> (list string)))
   (define (split-string sep s)
     (lisp (list string) (sep s)
       (str:split sep s :omit-nulls nil)))
 
+  (declare join (string -> (list string) -> string))
   (define (join sep strings)
     (lisp string (sep strings)
       (str:join sep strings)))

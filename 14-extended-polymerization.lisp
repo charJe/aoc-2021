@@ -1,12 +1,14 @@
 (cl:in-package #:charje.advent-of-code)
 
 (coalton-toplevel
+  (declare pair-frequencies ((list char) -> (trie (tuple char char) integer)))
   (define (pair-frequencies chars)
+    "Count Frequencies of pairs of characters (overlapping)."
     (loop* ((chars chars)
-            (fs empty-hash))
+            (fs empty-trie))
       (match chars
         ((cons x1 (cons x2 xs))
-         (recur (cons x2 xs) (hash-replace-by 0 (+ 1) (tuple x1 x2) fs)))
+         (recur (cons x2 xs) (trie-replace-by 0 (+ 1) (tuple x1 x2) fs)))
         (_ fs))))
 
   (declare read-template (string -> (list char)))
@@ -16,52 +18,56 @@
      head (else "")
      into))
 
+  (declare read-insertion-mappipng (string -> (trie (tuple char char) char)))
   (define (read-insertion-mappipng file)
-    (pipe
-     file read-lines
-     (drop 1)
-     (fold (fn* (line insertions-instructions)
+    (pipe file read-lines (drop 1)
+     (fold (fn* (line)
              (let* (((cons pair (cons insertion (nil))) line (split-string " -> ") (filter (/= ""))))
-               insertions-instructions
-               (hash-set (pipe pair (split-string "") (filter (/= ""))
-                               (map (fn* (p) p into head (else #\0)))
+               (trie-set (pipe pair into
                                (fn* ((cons left (cons right (nil))))
                                  (tuple left right)))
                          (pipe insertion into head (else #\0)))))
-           empty-hash)))
+           empty-trie)))
 
-  (define (polymerize chars insertion-mapping)
+  (declare polymerize ((list char) -> (trie (tuple char char) char) -> (trie char integer)))
+  (define (polymerize chars reactions)
+    "Given a starting polymer CHARS and an REACTIONS, return the
+frequencies of each letter after 40 polymerizations."
     (loop* ((iterations-left 40)
-            (pair-fs (pair-frequencies chars))
-            (character-fs (frequencies chars)))
+            (polymer (pair-frequencies chars))
+            (element-count (frequencies chars)))
       (if (== 0 iterations-left)
-          character-fs
-          (let* ((new-tripples
-                  pair-fs
-                  (map-hash
-                   (fn* ((tuple left right) num)
-                     (match (hash-ref (tuple left right) insertion-mapping)
-                       ((none) none)
-                       ((some c) (some (tuple (tuple3 left c right) num))))))
-                  (filter (/= none))
-                  (map (else (tuple (tuple3 #\0 #\0 #\0) 0)))))
+          element-count
+          (let* ((new-tripples polymer
+                               (map-trie
+                                (fn* ((tuple left right) num)
+                                  reactions (trie-ref (tuple left right))
+                                  (*match
+                                    ((none) none) ;not in insertion mapping, a new character (tripple) will NOT be inserted
+                                    ((some c) (some (tuple (tuple3 left c right) num))))))
+                               (filter (/= none))
+                               (map (fromsome "All nones has been removed"))))
             (recur (- iterations-left 1)
-                   (fold (fn* ((tuple (tuple3 left mid right) num) p-fs)
-                           p-fs
-                           (hash-replace-by 0 (+ num) (tuple left mid))
-                           (hash-replace-by 0 (+ num) (tuple mid right)))
-                          (fold (fn* ((tuple (tuple3 left _ right) _))
-                                  (hash-set (tuple left right) 0))
-                                pair-fs new-tripples)
+                   ;; new polymer
+                   (fold (fn* ((tuple (tuple3 left mid right) num) polymer)
+                           polymer
+                           (trie-replace-by 0 (+ num) (tuple left mid))
+                           (trie-replace-by 0 (+ num) (tuple mid right)))
+                         (fold (fn* ((tuple (tuple3 left _ right) _))
+                                 ;; this pair of characters are no longer next to each other; they will be removed (set to 0)
+                                 (trie-set (tuple left right) 0))
+                               polymer new-tripples)
                          new-tripples)
-                    (fold (fn* ((tuple (tuple3 _ mid _) num) c-fs)
-                            (hash-replace-by 0 (+ num) mid c-fs))
-                          character-fs new-tripples))))))
-  
+                   ;; new character frequencies
+                   (fold (fn* ((tuple (tuple3 _ mid _) num))
+                           (trie-replace-by 0 (+ num) mid))
+                         element-count new-tripples))))))
+
+  (declare rate-polymer ((trie char integer) -> integer))
   (define (rate-polymer frequencies)
-    (let* ((keys-values (map-hash tuple frequencies))
-           (most (fn* (op)
-                   keys-values
+    (let* ((most (fn* (op)
+                   frequencies
+                   (map-trie tuple)
                    (reduce
                     (fn* ((tuple least-frequent-letter smallest-frequency)
                           (tuple candidate-letter candidate-frequency))
