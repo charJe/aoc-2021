@@ -18,8 +18,8 @@
      head (else "")
      into))
 
-  (declare read-insertion-mappipng (string -> (trie (tuple char char) char)))
-  (define (read-insertion-mappipng file)
+  (declare read-insertion-mapping (string -> (trie (tuple char char) char)))
+  (define (read-insertion-mapping file)
     (pipe file read-lines (drop 1)
      (fold (fn* (line)
              (let* (((cons pair (cons insertion (nil))) line (split-string " -> ") (filter (/= ""))))
