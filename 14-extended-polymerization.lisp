@@ -38,15 +38,16 @@ frequencies of each letter after 40 polymerizations."
             (element-count (frequencies chars)))
       (if (== 0 iterations-left)
           element-count
-          (let* ((new-tripples polymer
-                               (map-trie
-                                (fn* ((tuple left right) num)
+          (let* ((new-triples polymer
+                               (map-trie tuple)
+                               (fold
+                                (fn* ((tuple (tuple left right) num) triples)
                                   reactions (trie-ref (tuple left right))
                                   (*match
-                                    ((none) none) ;not in insertion mapping, a new character (tripple) will NOT be inserted
-                                    ((some c) (some (tuple (tuple3 left c right) num))))))
-                               (filter (/= none))
-                               (map (fromsome "All nones has been removed"))))
+                                    ((none) triples) ;not in insertion mapping, a new character (tripple) will NOT be inserted
+                                    ((some c) (cons (tuple (tuple3 left c right) num)
+                                                    triples))))
+                                (make-list))))
             (recur (- iterations-left 1)
                    ;; new polymer
                    (fold (fn* ((tuple (tuple3 left mid right) num) polymer)
@@ -56,12 +57,12 @@ frequencies of each letter after 40 polymerizations."
                          (fold (fn* ((tuple (tuple3 left _ right) _))
                                  ;; this pair of characters are no longer next to each other; they will be removed (set to 0)
                                  (trie-set (tuple left right) 0))
-                               polymer new-tripples)
-                         new-tripples)
+                               polymer new-triples)
+                         new-triples)
                    ;; new character frequencies
                    (fold (fn* ((tuple (tuple3 _ mid _) num))
                            (trie-replace-by 0 (+ num) mid))
-                         element-count new-tripples))))))
+                         element-count new-triples))))))
 
   (declare rate-polymer ((trie char integer) -> integer))
   (define (rate-polymer frequencies)
